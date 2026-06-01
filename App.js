@@ -1,7 +1,8 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { Text } from 'react-native';
 
 import MapScreen from './screens/MapScreen';
@@ -11,14 +12,13 @@ import DiscussScreen from './screens/DiscussScreen';
 import DetailScreen from './screens/DetailScreen';
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 const TabIcon = ({ name, focused }) => {
   const icons = { Mapa: '🗺️', Hledat: '🔍', Oblíbené: '❤️', Diskuze: '💬' };
   return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>{icons[name]}</Text>;
 };
 
-// Stack pro každou záložku — umožní navigaci na Detail z libovolné záložky
 function MapStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

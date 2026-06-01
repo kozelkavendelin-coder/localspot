@@ -272,7 +272,7 @@ function OblibeneScreen({ onDetail, oblibene, setOblibene }) {
       </View>
       {seznam.length===0
         ? <View style={{flex:1,alignItems:'center',justifyContent:'center',gap:10,padding:32}}>
-            <Text style={{fontSize:52}}>🤍</Text>
+            <Text style={{fontSize:52}}>{'♡'}</Text>
             <Text style={{fontSize:18,fontWeight:'700',color:'#333'}}>Zatím žádné oblíbené</Text>
             <Text style={{fontSize:14,color:'#999',textAlign:'center',lineHeight:21}}>Klepněte na ❤️ v detailu libovolného podniku a přidejte si ho sem.</Text>
           </View>
@@ -549,7 +549,7 @@ function DetailScreen({ podnik:p, onBack, oblibene, setOblibene }) {
           </View>
         </View>
         <TouchableOpacity style={de.favBtn} onPress={() => setOblibene(o => o.includes(p.id) ? o.filter(x=>x!==p.id) : [...o,p.id])}>
-          <Text style={{fontSize:28}}>{jeFav?'❤️':'🤍'}</Text>
+          <Text style={{fontSize:28}}>{jeFav ? '❤️' : String.fromCharCode(9825)}</Text>
         </TouchableOpacity>
       </View>
 

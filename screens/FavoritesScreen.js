@@ -1,46 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import { PODNIKY } from '../data/businesses';
+import BusinessCard from '../components/BusinessCard';
 
-const inicialy = (n) => n.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
-
-const INIT = [
-  { id: 1, nazev: 'U Zlatého Kohouta', typ: 'Restaurace', hodnoceni: 4.6, vzdalenost: '320 m', barva: '#2d9b5e' },
-  { id: 2, nazev: 'Kavárna Světlá', typ: 'Kavárna', hodnoceni: 4.2, vzdalenost: '450 m', barva: '#1D9E75' },
-];
-
-export default function FavoritesScreen() {
-  const [oblibene, setOblibene] = useState(INIT);
+export default function FavoritesScreen({ navigation }) {
+  const [oblibene, setOblibene] = useState([PODNIKY[0], PODNIKY[1]]);
 
   const odebrat = (id) => setOblibene(o => o.filter(p => p.id !== id));
 
   return (
     <SafeAreaView style={s.container}>
-      <Text style={s.titl}>Oblíbené podniky</Text>
+      <View style={s.header}>
+        <Text style={s.titl}>Oblíbené</Text>
+        <Text style={s.pocet}>{oblibene.length} podniků</Text>
+      </View>
+
       {oblibene.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.emptyIcon}>❤️</Text>
-          <Text style={s.emptyTxt}>Zatím žádné oblíbené.</Text>
-          <Text style={s.emptyHint}>Přidejte je na mapě nebo v hledání.</Text>
+          <Text style={s.emptyIco}>🤍</Text>
+          <Text style={s.emptyTitl}>Zatím žádné oblíbené</Text>
+          <Text style={s.emptyHint}>Přidejte podniky klepnutím na ❤️ v detailu podniku</Text>
+          <TouchableOpacity style={s.emptyBtn} onPress={() => navigation.navigate('Hledat')}>
+            <Text style={s.emptyBtnTxt}>Hledat podniky</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView style={s.list}>
           {oblibene.map(p => (
-            <View key={p.id} style={s.karta}>
-              <View style={[s.avatar, { backgroundColor: p.barva }]}>
-                <Text style={s.avatarTxt}>{inicialy(p.nazev)}</Text>
-              </View>
-              <View style={s.info}>
-                <Text style={s.nazev}>{p.nazev}</Text>
-                <Text style={s.sub}>{p.typ} · {p.vzdalenost}</Text>
-                <View style={[s.badge, { backgroundColor: p.barva }]}>
-                  <Text style={s.badgeTxt}>{p.hodnoceni} ★</Text>
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => odebrat(p.id)} style={s.srdceBtn}>
-                <Text style={s.srdce}>❤️</Text>
+            <View key={p.id}>
+              <BusinessCard
+                podnik={p}
+                onPress={() => navigation.navigate('Detail', { podnik: p })}
+              />
+              <TouchableOpacity style={s.odebratBtn} onPress={() => odebrat(p.id)}>
+                <Text style={s.odebratTxt}>Odebrat z oblíbených</Text>
               </TouchableOpacity>
             </View>
           ))}
+          <View style={{ height: 20 }} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -49,20 +46,16 @@ export default function FavoritesScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  titl: { fontSize: 20, fontWeight: '700', color: '#111', padding: 16, paddingBottom: 12 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  emptyIcon: { fontSize: 48, marginBottom: 8 },
-  emptyTxt: { fontSize: 16, color: '#555', fontWeight: '600' },
-  emptyHint: { fontSize: 13, color: '#999', textAlign: 'center' },
+  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', padding: 16, paddingBottom: 12, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#e8e8e8' },
+  titl: { fontSize: 22, fontWeight: '800', color: '#111' },
+  pocet: { fontSize: 13, color: '#aaa' },
   list: { padding: 12 },
-  karta: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderWidth: 0.5, borderColor: '#e8e8e8' },
-  avatar: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarTxt: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  info: { flex: 1, gap: 4 },
-  nazev: { fontSize: 14, fontWeight: '600', color: '#111' },
-  sub: { fontSize: 11, color: '#888' },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5 },
-  badgeTxt: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  srdceBtn: { padding: 8 },
-  srdce: { fontSize: 24 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 },
+  emptyIco: { fontSize: 52, marginBottom: 4 },
+  emptyTitl: { fontSize: 18, fontWeight: '700', color: '#333' },
+  emptyHint: { fontSize: 14, color: '#999', textAlign: 'center', lineHeight: 20 },
+  emptyBtn: { marginTop: 8, backgroundColor: '#185FA5', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 22 },
+  emptyBtnTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  odebratBtn: { marginTop: -4, marginBottom: 14, alignItems: 'center' },
+  odebratTxt: { fontSize: 12, color: '#E24B4A' },
 });

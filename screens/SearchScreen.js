@@ -1,33 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, SafeAreaView, TextInput,
+} from 'react-native';
+import { PODNIKY } from '../data/businesses';
+import BusinessCard from '../components/BusinessCard';
 
 const KATEGORIE = ['Vše', 'Restaurace', 'Kavárny', 'Nákupy', 'Bary', 'Služby'];
 
-const PODNIKY = [
-  { id: 1, nazev: 'U Zlatého Kohouta', typ: 'Restaurace', hodnoceni: 4.6, vzdalenost: 320, otevreno: true, cas: 'do 23:00', barva: '#2d9b5e' },
-  { id: 2, nazev: 'Kavárna Světlá', typ: 'Kavárny', hodnoceni: 4.2, vzdalenost: 450, otevreno: true, cas: 'do 20:00', barva: '#1D9E75' },
-  { id: 3, nazev: 'Pizzeria Roma', typ: 'Restaurace', hodnoceni: 3.8, vzdalenost: 680, otevreno: true, cas: 'do 22:00', barva: '#BA7517' },
-  { id: 4, nazev: 'Albert', typ: 'Nákupy', hodnoceni: 4.1, vzdalenost: 200, otevreno: true, cas: 'do 22:00', barva: '#1D9E75' },
-  { id: 5, nazev: 'Hospoda Na Kopci', typ: 'Bary', hodnoceni: 3.2, vzdalenost: 820, otevreno: false, cas: 'Zavřeno', barva: '#E24B4A' },
-];
-
-const inicialy = (n) => n.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
-
-export default function SearchScreen() {
+export default function SearchScreen({ navigation }) {
   const [kat, setKat] = useState('Vše');
   const [jenOtevreno, setJenOtevreno] = useState(false);
+  const [razeni, setRazeni] = useState('vzdalenost');
+  const [query, setQuery] = useState('');
 
-  const filtrovane = PODNIKY
-    .filter(p => kat === 'Vše' || p.typ === kat)
-    .filter(p => !jenOtevreno || p.otevreno)
-    .sort((a, b) => a.vzdalenost - b.vzdalenost);
+  const filtrovane = useMemo(() => {
+    return PODNIKY
+      .filter(p => kat === 'Vše' || p.kategorie === kat)
+      .filter(p => !jenOtevreno || p.otevreno)
+      .filter(p => !query || p.nazev.toLowerCase().includes(query.toLowerCase()) || p.typ.toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => razeni === 'hodnoceni' ? b.hodnoceni - a.hodnoceni : a.vzdalenost - b.vzdalenost);
+  }, [kat, jenOtevreno, razeni, query]);
 
   return (
     <SafeAreaView style={s.container}>
+      {/* Search bar */}
       <View style={s.header}>
-        <View style={s.searchBar}>
-          <Text style={s.searchTxt}>🔍  Hledat podniky...</Text>
+        <View style={s.searchWrap}>
+          <Text style={s.searchIcon}>🔍</Text>
+          <TextInput
+            style={s.searchInput}
+            placeholder="Hledat podniky..."
+            placeholderTextColor="#aaa"
+            value={query}
+            onChangeText={setQuery}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')}>
+              <Text style={{ color: '#aaa', fontSize: 16, paddingHorizontal: 8 }}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Kategorie */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chips}>
           {KATEGORIE.map(k => (
             <TouchableOpacity
@@ -39,40 +54,56 @@ export default function SearchScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Filtry */}
         <View style={s.filtrRow}>
           <TouchableOpacity
-            style={[s.filtr, jenOtevreno && s.filtrActive]}
+            style={[s.filtr, jenOtevreno && s.filtrActiveGreen]}
             onPress={() => setJenOtevreno(!jenOtevreno)}
           >
-            <Text style={[s.filtrTxt, jenOtevreno && s.filtrTxtActive]}>● Otevřeno</Text>
+            <Text style={[s.filtrTxt, jenOtevreno && { color: '#2d9b5e', fontWeight: '700' }]}>
+              ● Otevřeno
+            </Text>
           </TouchableOpacity>
-          <View style={s.filtr}><Text style={s.filtrTxt}>Vzdálenost ↕</Text></View>
-          <View style={s.filtr}><Text style={s.filtrTxt}>Hodnocení ↕</Text></View>
+          <TouchableOpacity
+            style={[s.filtr, razeni === 'vzdalenost' && s.filtrActiveBlue]}
+            onPress={() => setRazeni('vzdalenost')}
+          >
+            <Text style={[s.filtrTxt, razeni === 'vzdalenost' && { color: '#185FA5', fontWeight: '700' }]}>
+              📍 Vzdálenost
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.filtr, razeni === 'hodnoceni' && s.filtrActiveBlue]}
+            onPress={() => setRazeni('hodnoceni')}
+          >
+            <Text style={[s.filtrTxt, razeni === 'hodnoceni' && { color: '#185FA5', fontWeight: '700' }]}>
+              ★ Hodnocení
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        <Text style={s.pocet}>{filtrovane.length} podniků</Text>
       </View>
 
-      <ScrollView style={s.list}>
-        {filtrovane.map(p => (
-          <TouchableOpacity key={p.id} style={s.karta}>
-            <View style={[s.avatar, { backgroundColor: p.barva }]}>
-              <Text style={s.avatarTxt}>{inicialy(p.nazev)}</Text>
-            </View>
-            <View style={s.kartaInfo}>
-              <Text style={s.kartaNazev}>{p.nazev}</Text>
-              <Text style={s.kartaSub}>{p.typ} · {p.vzdalenost} m</Text>
-              <View style={s.kartaRow}>
-                <View style={[s.badge, { backgroundColor: p.barva }]}>
-                  <Text style={s.badgeTxt}>{p.hodnoceni} ★</Text>
-                </View>
-                <Text style={p.otevreno ? s.open : s.closed}>
-                  {p.otevreno ? 'Otevřeno' : 'Zavřeno'}
-                </Text>
-                <Text style={s.cas}>{p.cas}</Text>
-              </View>
-            </View>
-            <Text style={s.arrow}>›</Text>
-          </TouchableOpacity>
-        ))}
+      {/* Seznam */}
+      <ScrollView style={s.list} keyboardShouldPersistTaps="handled">
+        {filtrovane.length === 0 ? (
+          <View style={s.prazdne}>
+            <Text style={s.prazdneIco}>🔍</Text>
+            <Text style={s.prazdneTxt}>Žádné výsledky</Text>
+            <Text style={s.prazdneHint}>Zkuste jiné klíčové slovo nebo kategorii</Text>
+          </View>
+        ) : (
+          filtrovane.map(p => (
+            <BusinessCard
+              key={p.id}
+              podnik={p}
+              onPress={() => navigation.navigate('Detail', { podnik: p })}
+            />
+          ))
+        )}
+        <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -80,31 +111,24 @@ export default function SearchScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { backgroundColor: '#fff', paddingHorizontal: 14, paddingTop: 14, borderBottomWidth: 0.5, borderBottomColor: '#e0e0e0' },
-  searchBar: { backgroundColor: '#f0f0f0', borderRadius: 20, padding: 10, marginBottom: 12 },
-  searchTxt: { fontSize: 13, color: '#999' },
+  header: { backgroundColor: '#fff', paddingHorizontal: 14, paddingTop: 12, borderBottomWidth: 0.5, borderBottomColor: '#e8e8e8' },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderRadius: 14, paddingHorizontal: 12, marginBottom: 12 },
+  searchIcon: { fontSize: 15, marginRight: 6 },
+  searchInput: { flex: 1, fontSize: 14, color: '#111', paddingVertical: 11 },
   chips: { marginBottom: 10 },
-  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14, backgroundColor: '#f0f0f0', marginRight: 8 },
+  chip: { paddingHorizontal: 15, paddingVertical: 7, borderRadius: 20, backgroundColor: '#f2f2f2', marginRight: 8 },
   chipActive: { backgroundColor: '#185FA5' },
-  chipTxt: { fontSize: 12, color: '#555' },
-  chipTxtActive: { color: '#fff', fontWeight: '600' },
-  filtrRow: { flexDirection: 'row', gap: 8, paddingBottom: 12 },
-  filtr: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#f0f0f0' },
-  filtrActive: { backgroundColor: '#e8f5ee' },
-  filtrTxt: { fontSize: 11, color: '#555' },
-  filtrTxtActive: { color: '#2d9b5e', fontWeight: '600' },
+  chipTxt: { fontSize: 12, color: '#555', fontWeight: '500' },
+  chipTxtActive: { color: '#fff', fontWeight: '700' },
+  filtrRow: { flexDirection: 'row', gap: 8, paddingBottom: 10, flexWrap: 'wrap' },
+  filtr: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 10, backgroundColor: '#f2f2f2' },
+  filtrActiveGreen: { backgroundColor: '#e8f5ee' },
+  filtrActiveBlue: { backgroundColor: '#e8f0fb' },
+  filtrTxt: { fontSize: 11, color: '#666' },
+  pocet: { fontSize: 11, color: '#aaa', paddingBottom: 10 },
   list: { padding: 12 },
-  karta: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderWidth: 0.5, borderColor: '#e8e8e8' },
-  avatar: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarTxt: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  kartaInfo: { flex: 1 },
-  kartaNazev: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
-  kartaSub: { fontSize: 11, color: '#888', marginBottom: 5 },
-  kartaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5 },
-  badgeTxt: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  open: { fontSize: 11, color: '#2d9b5e', fontWeight: '600' },
-  closed: { fontSize: 11, color: '#E24B4A', fontWeight: '600' },
-  cas: { fontSize: 10, color: '#999' },
-  arrow: { fontSize: 20, color: '#ccc' },
+  prazdne: { alignItems: 'center', paddingTop: 60, gap: 8 },
+  prazdneIco: { fontSize: 40 },
+  prazdneTxt: { fontSize: 16, fontWeight: '600', color: '#555' },
+  prazdneHint: { fontSize: 13, color: '#aaa', textAlign: 'center' },
 });
